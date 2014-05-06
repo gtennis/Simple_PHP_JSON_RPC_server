@@ -8,7 +8,7 @@ The server simulates interaction between a simple eshop website. All the data is
 Usage
 --------------
 
-Deploy the code on your prefered hosting server and perform call to index.php file. Use POST HTTP method. Here are the request bodies for different tasks:
+Deploy the code on your prefered hosting server OR use live demo at "http://www.dotheapp.com/jsonrpc/" and perform request using POST HTTP method. Here are the request bodies for different tasks:
 
 **Clear database**: {"method": "ClearDb", "params": {"api_key" : "my-app-secret-code"}, "id": null}
 

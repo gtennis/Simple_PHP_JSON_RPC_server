@@ -33,7 +33,8 @@
  * @filesource
  */
     
-require 'BaseMethod.php';
+require 'methods'.DIRECTORY_SEPARATOR.'BaseMethod.php';
+require 'database'.DIRECTORY_SEPARATOR.'Database.php';
 
 class CreateOrderMethod extends BaseMethod {
 
@@ -42,7 +43,6 @@ class CreateOrderMethod extends BaseMethod {
         try {
 
             // Create database handler
-            require('Database.php');
             $dbh = new Database();
 
             // Perform input checking

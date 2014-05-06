@@ -33,22 +33,23 @@
  * @filesource
  */
 
-require 'Utils.php';
-require 'BaseMethod.php';
+require 'methods'.DIRECTORY_SEPARATOR.'BaseMethod.php';
+require 'database'.DIRECTORY_SEPARATOR.'Database.php';
 
-class LoginUserMethod extends BaseMethod {
+class GetCartItemsMethod extends BaseMethod {
 
     public function execute($params, &$result, &$error) {
 
+        $resultData = NULL;
+        
         try {
 
             // Create database handler
-            require('Database.php');
             $dbh = new Database();
 
             // Find the user
-            $sth = $dbh->prepare('SELECT * FROM users WHERE username = ? AND pwd = ?');
-            $sth->execute(array($params['username'], $params['pwd']));
+            $sth = $dbh->prepare('SELECT * FROM users WHERE token = ?');
+            $sth->execute(array($params['token']));
 
             // If not found then return NOT_LOGGED_IN
             // SQLite does not support rowCount: http://stackoverflow.com/questions/12720648/php-sqlite-pdo-check-if-user-is-in-table
@@ -58,34 +59,39 @@ class LoginUserMethod extends BaseMethod {
             if (!$userRow) {
 
                 $error['code'] = 'NOT_LOGGED_IN';
-                $error['message'] = 'A user with this email and password was not found';
+                $error['message'] = 'Please login. Bad token.';
 
-                // Otherwise proceed with the login
+                // Continue
             } else {
 
-                // Start transaction
-                $dbh->beginTransaction();
+                //Select last update_date
+                $sth = $dbh->prepare('SELECT i.*  FROM user_cart c, items i WHERE i.id = c.item_id');
+                $sth->execute();
 
-                // Generate new token
-                $generated_token = Utils::guid();
+                $resultData['cart_items'] = array();
 
-                $user_id = $userRow['id'];
+                while ($row = $sth->fetch()) {
 
-                // Update user's token
-                $sth = $dbh->prepare('UPDATE users SET token = ? WHERE id = ?');
-                $sth->execute(array($generated_token, $user_id));
-
-                // Save
-                $dbh->commit();
-
-                // Return user token and user_id
-                $result['user_id'] = $user_id;
-                $result['token'] = $generated_token;
+                    $item = array(
+                        'id' => intval($row['id']),
+                        'title' => $row['title'],
+                        'cost' => floatval($row['cost'])
+                    );
+                    array_push($resultData['cart_items'], $item);
+                }
             }
         } catch (PDOException $e) {
 
             $error['code'] = 'DATABASE_ERROR';
             $error['message'] = $e->getMessage();
         }
+
+        // Return nil if no records were found
+        if (empty($resultData['cart_items'])) {
+            
+            $resultData['cart_items'] = NULL;
+        }
+        
+        $result = $resultData;
     }
 }

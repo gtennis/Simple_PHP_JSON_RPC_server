@@ -1,5 +1,5 @@
 <?php
-    
+
 /**
  * Simple PHP JSON-RPC server implementation
  *
@@ -32,61 +32,27 @@
  * @link
  * @filesource
  */
+    
+require 'methods'.DIRECTORY_SEPARATOR.'BaseMethod.php';
+require 'database'.DIRECTORY_SEPARATOR.'Database.php';
 
-require 'BaseMethod.php';
-
-class AddToCartMethod extends BaseMethod {
+class LoadItemsMethod extends BaseMethod {
 
     public function execute($params, &$result, &$error) {
-
+        
         try {
-
+            
             // Create database handler
-            require('Database.php');
             $dbh = new Database();
+            
+            // Insert 3 test records
+            $sth = $dbh->prepare('INSERT INTO items (title, cost) VALUES (?, ?)');
+            $sth->execute(array('jeans', 100));
+            $sth->execute(array('shoes', 150));
+            $sth->execute(array('cap', 130));
 
-            // Perform input checking
-            // ...
-            // Find the item
-            $sth = $dbh->prepare('SELECT * FROM items WHERE id = ?');
-            $sth->execute(array($params['item_id']));
-            $itemRow = $sth->fetch();
-
-            // Check if item was found
-            if (!$itemRow) {
-
-                $error['code'] = 'BAD_ITEM';
-                $error['message'] = 'This item does not exist (item_id)';
-            } else {
-
-                // Find the user
-                $sth = $dbh->prepare('SELECT * FROM users WHERE token = ? AND id = ?');
-                $sth->execute(array($params['token'], $params['user_id']));
-                $userRow = $sth->fetch();
-
-                // If not found then return NOT_LOGGED_IN
-                //if ($sth->rowCount() == 0) {
-                if (!$userRow) {
-
-                    $error['code'] = 'NOT_LOGGED_IN';
-                    $error['message'] = 'Please login. Bad user_id or token.';
-
-                    // Else continue
-                } else {
-
-                    // Start transaction
-                    $dbh->beginTransaction();
-
-                    // Add to bag
-                    $sth = $dbh->prepare('INSERT INTO user_cart (user_id, item_id) VALUES (?, ?)');
-                    $sth->execute(array($params['user_id'], $params['item_id']));
-
-                    // Save
-                    $dbh->commit();
-                }
-            }
         } catch (PDOException $e) {
-
+            
             $error['code'] = 'DATABASE_ERROR';
             $error['message'] = $e->getMessage();
         }

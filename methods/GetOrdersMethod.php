@@ -33,18 +33,18 @@
  * @filesource
  */
 
-require 'BaseMethod.php';
+require 'methods'.DIRECTORY_SEPARATOR.'BaseMethod.php';
+require 'database'.DIRECTORY_SEPARATOR.'Database.php';
 
 class GetOrdersMethod extends BaseMethod {
 
     public function execute($params, &$result, &$error) {
 
-        $resultData = array();
+        $resultData = NULL;
 
         try {
 
             // Create database handler
-            require('Database.php');
             $dbh = new Database();
 
             // Find the user

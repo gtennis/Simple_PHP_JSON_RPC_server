@@ -1,5 +1,5 @@
 <?php
-
+    
 /**
  * Simple PHP JSON-RPC server implementation
  *
@@ -33,39 +33,50 @@
  * @filesource
  */
 
-require 'BaseMethod.php';
+require 'methods'.DIRECTORY_SEPARATOR.'BaseMethod.php';
+require 'database'.DIRECTORY_SEPARATOR.'Database.php';
 
-class GetItemsMethod extends BaseMethod {
+class ClearDbMethod extends BaseMethod {
 
     public function execute($params, &$result, &$error) {
 
         try {
 
             // Create database handler
-            require('Database.php');
             $dbh = new Database();
 
-            //Select last update_date
-            $sth = $dbh->prepare('SELECT i.* FROM items i');
-            $sth->execute();
+            // Start transaction
+            $dbh->beginTransaction();
 
-            $resultData['items'] = array();
+            // Delete user_cat
+            $sth = $dbh->query('DELETE FROM user_cart');
 
-            while ($row = $sth->fetch()) {
+            // Delete order_items
+            $sth = $dbh->query('DELETE FROM order_items');
 
-                $item = array(
-                    'id' => $row['id'],
-                    'title' => $row['title'],
-                    'cost' => $row['cost']
-                );
-                array_push($resultData['items'], $item);
-            }
+            // Delete orders
+            $sth = $dbh->query('DELETE FROM orders');
+
+            // Delete items
+            $sth = $dbh->query('DELETE FROM items');
+
+            // Delete user_cat
+            $sth = $dbh->query('DELETE FROM users');
+
+            // Reset id autoincrement values
+            $sth = $dbh->prepare('DELETE FROM sqlite_sequence WHERE name = ?');
+            $sth->execute(array('user_cart'));
+            $sth->execute(array('order_items'));
+            $sth->execute(array('orders'));
+            $sth->execute(array('items'));
+            $sth->execute(array('users'));
+
+            // Save
+            $dbh->commit();
         } catch (PDOException $e) {
 
             $error['code'] = 'DATABASE_ERROR';
             $error['message'] = $e->getMessage();
         }
-
-        $result = $resultData;
     }
 }

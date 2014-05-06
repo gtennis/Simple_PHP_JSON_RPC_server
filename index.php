@@ -37,7 +37,7 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
     
 // Check for configs
-require 'config.php';
+require 'config' . DIRECTORY_SEPARATOR . 'config.php';
 if (!$config) {
     
     die('Config file was not found');
@@ -93,7 +93,7 @@ switch ($method) {
     case 'ClearDb':
     case 'LoadItems':
         
-        $fileExists = file_exists($method.'Method'.'.php');
+        $fileExists = file_exists('methods'.DIRECTORY_SEPARATOR.$method.'Method'.'.php');
         break;
 
     // Check if unknown method
@@ -128,7 +128,7 @@ if (empty($responseData['result'])) {
 }
 
 // Prepare method
-include $method.'Method'.'.php';
+include 'methods'.DIRECTORY_SEPARATOR.$method.'Method'.'.php';
 $methodClass = $method.'Method'; 
 $method = new $methodClass;
 

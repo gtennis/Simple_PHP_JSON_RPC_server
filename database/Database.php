@@ -37,7 +37,7 @@ class Database extends PDO
 {
    public function __construct() {
        
-      parent::__construct("sqlite:./eshop_db.sqlite"/*$dsn, $username, $password, $driver_options*/);
+      parent::__construct("sqlite:./database/eshop_db.sqlite"/*$dsn, $username, $password, $driver_options*/);
       
       $this->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
       $this->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);

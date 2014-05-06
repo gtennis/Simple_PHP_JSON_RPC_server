@@ -1,5 +1,5 @@
 <?php
-
+    
 /**
  * Simple PHP JSON-RPC server implementation
  *
@@ -33,26 +33,38 @@
  * @filesource
  */
     
-require 'BaseMethod.php';
+require 'methods'.DIRECTORY_SEPARATOR.'BaseMethod.php';
+require 'database'.DIRECTORY_SEPARATOR.'Database.php';
+require 'utils'.DIRECTORY_SEPARATOR.'Utils.php';
 
-class LoadItemsMethod extends BaseMethod {
+class CreateUserMethod extends BaseMethod {
 
     public function execute($params, &$result, &$error) {
-        
-        try {
-            
-            // Create database handler
-            require('Database.php');
-            $dbh = new Database();
-            
-            // Insert 3 test records
-            $sth = $dbh->prepare('INSERT INTO items (title, cost) VALUES (?, ?)');
-            $sth->execute(array('jeans', 100));
-            $sth->execute(array('shoes', 150));
-            $sth->execute(array('cap', 130));
 
+        try {
+
+            // Create database handler
+            $dbh = new Database();
+
+            // Perform input checking
+            // ...
+            // Start transaction
+            $dbh->beginTransaction();
+
+            // Generate new token
+            $generated_token = Utils::guid();
+
+            // Create the user
+            $sth = $dbh->prepare('INSERT INTO users (username, pwd, email, token) VALUES (?, ?, ?, ?)');
+            $sth->execute(array($params['username'], $params['pwd'], $params['email'], $generated_token));
+
+            // Save
+            $dbh->commit();
+
+            $result['token'] = $generated_token;
+            $result['user_id'] = $dbh->lastInsertId();
         } catch (PDOException $e) {
-            
+
             $error['code'] = 'DATABASE_ERROR';
             $error['message'] = $e->getMessage();
         }

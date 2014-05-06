@@ -32,37 +32,59 @@
  * @link
  * @filesource
  */
-    
-require 'Utils.php';
-require 'BaseMethod.php';
 
-class CreateUserMethod extends BaseMethod {
+require 'methods'.DIRECTORY_SEPARATOR.'BaseMethod.php';
+require 'database'.DIRECTORY_SEPARATOR.'Database.php';
+
+class AddToCartMethod extends BaseMethod {
 
     public function execute($params, &$result, &$error) {
 
         try {
 
             // Create database handler
-            require('Database.php');
             $dbh = new Database();
 
             // Perform input checking
             // ...
-            // Start transaction
-            $dbh->beginTransaction();
+            // Find the item
+            $sth = $dbh->prepare('SELECT * FROM items WHERE id = ?');
+            $sth->execute(array($params['item_id']));
+            $itemRow = $sth->fetch();
 
-            // Generate new token
-            $generated_token = Utils::guid();
+            // Check if item was found
+            if (!$itemRow) {
 
-            // Create the user
-            $sth = $dbh->prepare('INSERT INTO users (username, pwd, email, token) VALUES (?, ?, ?, ?)');
-            $sth->execute(array($params['username'], $params['pwd'], $params['email'], $generated_token));
+                $error['code'] = 'BAD_ITEM';
+                $error['message'] = 'This item does not exist (item_id)';
+            } else {
 
-            // Save
-            $dbh->commit();
+                // Find the user
+                $sth = $dbh->prepare('SELECT * FROM users WHERE token = ? AND id = ?');
+                $sth->execute(array($params['token'], $params['user_id']));
+                $userRow = $sth->fetch();
 
-            $result['token'] = $generated_token;
-            $result['user_id'] = $dbh->lastInsertId();
+                // If not found then return NOT_LOGGED_IN
+                //if ($sth->rowCount() == 0) {
+                if (!$userRow) {
+
+                    $error['code'] = 'NOT_LOGGED_IN';
+                    $error['message'] = 'Please login. Bad user_id or token.';
+
+                    // Else continue
+                } else {
+
+                    // Start transaction
+                    $dbh->beginTransaction();
+
+                    // Add to bag
+                    $sth = $dbh->prepare('INSERT INTO user_cart (user_id, item_id) VALUES (?, ?)');
+                    $sth->execute(array($params['user_id'], $params['item_id']));
+
+                    // Save
+                    $dbh->commit();
+                }
+            }
         } catch (PDOException $e) {
 
             $error['code'] = 'DATABASE_ERROR';
